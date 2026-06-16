@@ -30,4 +30,11 @@
 - [A Cookbook of SPL Recipes](docs/SPL-Cookbook-DRAFT-v0.5.pdf)
 
 
+## Work in progress
+
+
+| # | Title | Comment | Repo  |
+|---|-------|---------|-------|
+| 1 | [SPL: Orchestrating Workflows with Declarative Deterministic–Probabilistic Composition](./docs/spl-dual-mode.pdf) | TMLR  | https://github.com/digital-duck/SPL.py |
+| 2 | [ConceptBook: A Graph-First Framework for AI-Generated Curricula](./docs/concept-book.pdf) | AIED  | https://github.com/digital-duck/concept-book |
 
