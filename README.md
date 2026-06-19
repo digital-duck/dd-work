@@ -5,8 +5,7 @@
 
 | # | arXiv ID | Category | Title | Comment | Repo |
 |---|----------|----------|-------|-------|-------|
-| 10 |  | cs.CL | [SPL: Orchestrating Workflows with Declarative
-Deterministic–Probabilistic Composition](./docs/spl-dual-mode.pdf) |  Submitted to TMLR | https://github.com/digital-duck/SPL.py |
+| 10 |  | cs.CL | [SPL: Orchestrating Workflows with Declarative Deterministic–Probabilistic Composition](./docs/spl-dual-mode.pdf) |  Submitted to TMLR | https://github.com/digital-duck/SPL.py |
 | 9 | submit/7556205 | cs.CL | [Beyond Vibe Coding: Intent Invariance and Structured Prompt Language](./docs/beyond-vibe-coding-arxiv-submitted.pdf) |  Revision Pending | https://github.com/digital-duck/SPL.py |
 | 8 | submit/7420152 | cs.CL, cs.PL | [SPL 2.0: A Declarative Language for Agentic Workflow Orchestration](./docs/SPL20-arxiv.pdf) |  Revision Pending | https://github.com/digital-duck/SPL20 |
 | 7 | submit/7373026 | cs.CL, cs.PL, cs.DC | [Momagrid: A Decentralized Inference Runtime with Linear Complexity via Semantic Chunking](./docs/Momagrid-arxiv.pdf) | Revision Pending  | https://github.com/digital-duck/momagrid | 
