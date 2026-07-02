@@ -36,5 +36,5 @@
 
 | # | Title | Comment | Repo  |
 |---|-------|---------|-------|
-| 1 | [ConceptBook: A Graph-First Framework for AI-Generated Curricula](./docs/spl4ed-paper-v0.9.pdf) | AIED  | https://github.com/digital-duck/concept-book |
+| 1 | [ConceptBook: A Graph-First Framework for AI-Generated Curricula](./docs/spl4ed-paper-v1.0.pdf) | AIED  | https://github.com/digital-duck/concept-book |
 
