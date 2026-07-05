@@ -21,6 +21,7 @@
 
 | Title |    URL | Comment  | Repo |
 |-------|--------|----------|--------|
+| Compression is Understanding | https://medium.com/@wen.g.gong/compression-is-understanding-409b9a7d6779 | | |
 | NeuroSymbolic Math in a Structured Prompt Language | https://medium.com/@wen.g.gong/neurosymbolic-math-in-a-structured-prompt-language-6b920d44d11b | | |
 | AI@Home with Gemma | https://medium.com/@wen.g.gong/ai-home-with-gemma-369fa8c27e2b?postPublishedType=repub | | |
 | The Momahub Moment | https://medium.com/@wen.g.gong/the-momahub-moment-df852c42f3da | | https://github.com/digital-duck/momahub.py |
