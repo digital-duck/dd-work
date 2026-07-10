@@ -21,6 +21,7 @@
 
 | Title |    URL | Comment  | Repo |
 |-------|--------|----------|--------|
+| SPL: Orchestrating Workflows with Declarative Deterministic-Probabilistic Composition | https://gist.science/paper/2607.07727 | explanation by gist.science | |
 | Compression is Understanding | https://medium.com/@wen.g.gong/compression-is-understanding-409b9a7d6779 | | |
 | NeuroSymbolic Math in a Structured Prompt Language | https://medium.com/@wen.g.gong/neurosymbolic-math-in-a-structured-prompt-language-6b920d44d11b | | |
 | AI@Home with Gemma | https://medium.com/@wen.g.gong/ai-home-with-gemma-369fa8c27e2b?postPublishedType=repub | | |
