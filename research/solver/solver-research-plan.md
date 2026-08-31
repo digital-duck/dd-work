@@ -78,7 +78,89 @@ The foundational paper's verifier ladder (R1 SymPy → R2 SageMath → R3 Lean) 
 
 ### 3.3 Suggested expansion - strategy optimization (multi-objective tradeoffs)
 
-**Core insight:** Single-objective OR (§3.1) asks *"what is optimal?"*. Strategy optimization asks *"what is the best tradeoff between competing objectives?"* — cost vs. service level vs. risk vs. carbon. The ASSERT predicate shifts from `status == "Optimal"` (single winner) to Pareto dominance or weighted-sum optimality. The LLM's NL→decomposition role expands: it must extract *multiple* objectives and their relative priorities from stakeholder language, then interpret the Pareto front in business terms.
+#### Background: from single-objective to multi-objective optimization
+
+Every OR problem in §3.1 has one objective — minimize cost, maximize profit, minimize travel time. The solver finds **the** optimal answer: a single number, a single solution, a single certificate. Real strategic decisions rarely work this way.
+
+A supply chain manager does not optimize cost alone — they optimize *cost and service level and carbon footprint*, and these pull in opposite directions. Cutting cost usually means longer delivery times (lower service level) or cheaper but dirtier transport (higher carbon). There is no single "optimal" strategy; there are only **tradeoffs**.
+
+**What is a Pareto front?**
+
+Vilfredo Pareto (Italian economist, 1848–1923) observed that in any multi-objective problem, some solutions are strictly worse than others — and some are not. A solution A **dominates** solution B if A is at least as good on every objective and strictly better on at least one. The **Pareto front** is the set of all solutions that are not dominated by any other — the "frontier of best tradeoffs."
+
+*Concrete example — supply chain with two objectives (minimize cost, maximize service level):*
+
+```
+Solution X: cost=$100K, service=70%  ← dominated (Y beats it on both objectives)
+Solution Y: cost=$90K,  service=80%  ← on Pareto front
+Solution Z: cost=$70K,  service=60%  ← on Pareto front (cheaper but worse service)
+Solution W: cost=$80K,  service=85%  ← on Pareto front
+```
+
+Y, Z, and W form the Pareto front — you cannot improve cost without hurting service level, or vice versa. Which point you choose depends on **stakeholder priorities**, not mathematics. The solver's job is to find the front; the decision-maker's (or LLM's) job is to select a point on it.
+
+Real-world strategy always balances at least three competing objectives, forming a 3-dimensional objective space. Unlike a 2D Pareto curve (which can be drawn on paper), a 3D Pareto surface must be visualized interactively — a scatter plot or parallel-coordinates chart lets a decision-maker rotate the surface and intuitively pick their preferred operating point. Within any single dimension, a standard OR solver can find the optimum; the strategic question is where to stand across all three.
+
+Common domain triads:
+- **Operations:** cost vs. quality vs. throughput
+- **Supply chain:** cost vs. service level vs. carbon footprint
+- **Finance:** return vs. risk vs. liquidity
+- **Product:** time-to-market vs. quality vs. budget
+
+The same objectives recur across domains under different names — *quality* and *service level* are the same dimension; *cost* and *budget* are another. Mapping these aliases to canonical objective dimensions is a key step in NL→problem decomposition, enabling the LLM to translate stakeholder language into a solver-ready formulation regardless of which domain vocabulary the user speaks:
+
+| Objective dimension | Operations | Supply chain | Finance | Product |
+|---|---|---|---|---|
+| **Cost / spend** | Unit cost, overhead | Procurement cost, freight | Budget, expense ratio | Development cost |
+| **Speed / throughput** | Cycle time, OEE | Lead time, inventory turns | Liquidity, time-to-close | Time-to-market |
+| **Risk / resilience** | Downtime risk | Supply disruption risk | Portfolio volatility | Technical debt |
+| **Quality / service level** | Defect rate, yield | On-time delivery, fill rate | Return, alpha | Feature completeness |
+| **Sustainability** | Energy, emissions | Carbon footprint | ESG score | Maintainability |
+
+Four universal themes emerge across every row: **cost**, **time**, **risk**, and **quality** — present in every domain, just named differently. Sustainability is a fifth thread gaining strategic weight. Most strategy problems pick three of these as the axes of their Pareto space and optimize across them.
+
+The ordering reflects natural dominance: **cost** and **time** are the most tightly coupled (faster delivery almost always costs more; cheaper options almost always take longer) and tend to be the *principal* axes that frame the decision. **Risk** is the hidden multiplier — a strategy that looks optimal on cost and time can collapse under uncertainty, so it often acts as a constraint rather than a free dimension. **Quality** is typically the most negotiable: stakeholders are usually willing to trade some quality for a meaningful gain in cost or time, making it the secondary or "adjustment" dimension. Identifying which dimension is principal — the one the business will not compromise — is the first question the LLM must answer during NL→decomposition.
+
+**Optimization at different granularity levels:**
+
+§3.1 and §3.3 are not separate topics — they are the same activity at different scales. Within a single objective dimension (cost, time, risk, quality), a standard OR solver finds the optimum: this is fine-grained, within-dimension optimization. Across dimensions, multi-objective search finds the best tradeoff surface: this is coarse-grained, cross-dimension optimization. A complete strategy solution requires both — drill down within each axis to know what is achievable, then zoom out across axes to decide where to operate.
+
+**Two-phase exploration strategy:**
+
+This granularity view suggests a practical workflow that bridges §3.1 (single-objective) and §3.3 (multi-objective):
+
+1. **Phase 1 — anchor points:** optimize each dimension independently using a standard OR solver (§3.1). Each solution is the theoretical best possible for that objective alone — the *utopia point* for that axis.
+2. **Phase 2 — Pareto search:** starting from each anchor, perturb the solution and observe how other objective dimensions respond. Tightening one constraint (e.g. "cost must stay within 10% of the optimum") and re-solving reveals the tradeoff curve. Sweeping this constraint traces the Pareto front between two dimensions.
+
+This means the §3.1 recipes are not just standalone benchmarks — they are the first step of every multi-objective experiment in §3.3. The LLM's role in Phase 2 is to propose meaningful perturbation scenarios in natural language ("what if we allow 5% cost increase — how much does service level improve?") and interpret the resulting tradeoff for a human decision-maker.
+
+**SPL workflow composition as the orchestration layer:**
+
+Because SPL workflows are composable via `CALL`, `CALL PARALLEL`, and `WHILE`, the two-phase strategy maps directly onto SPL primitives — no new language features required:
+
+- **Phase 1 anchor calls:** `CALL cost_optimizer(...) INTO @cost_anchor` and `CALL time_optimizer(...) INTO @time_anchor` — each §3.1 recipe becomes a named workflow invoked as a sub-call, returning its utopia point.
+- **Parallel sweep:** `CALL PARALLEL` dispatches the same solver across a weight vector grid simultaneously (e.g. 10 different cost/time weight combinations), collecting a sample of Pareto front points in one shot.
+- **Iterative refinement:** `WHILE front_not_converged DO ... END` tightens the constraint budget each iteration, zooming into the region of the front that the LLM has identified as most relevant to stakeholder priorities.
+- **Interpretation step:** a final `GENERATE ... INTO @recommendation` call asks the LLM to read the collected front points and explain the tradeoff in plain language for the decision-maker.
+
+This means complex multi-objective sweeps — which would require custom orchestration code in a conventional framework — are expressible as composed SPL workflows that reuse existing §3.1 recipes unchanged. The DODA principle holds: the same `.spl` specification runs locally (sequential), on Momagrid (parallel branches on different nodes), or against any adapter without modification.
+
+**Tighter than message passing — intelligent, rule-driven orchestration:**
+
+MPI (Message Passing Interface) connects loosely coupled processes by shuttling data between them — each process is fixed, and the interface is a data pipe. SPL composition is fundamentally different: the orchestrator does not just pass data, it *reasons* about what to do next. Because every SPL workflow is fully parameterized — model, adapter, solver flags, problem size, constraint bounds — the orchestrator can change any of these dynamically based on intermediate results:
+
+- **Model switching:** `EVALUATE @result WHEN quality < threshold THEN CALL solver WITH model="opus" ...` — escalate to a stronger model if the current one produces a weak solution, without changing the workflow structure.
+- **Solver routing:** route to PuLP for LP, OR-Tools for scheduling, cvxpy for convex multi-objective — selected at runtime by the LLM reading the problem description, not hardcoded.
+- **Adaptive parameter tuning:** tighten or relax constraint bounds (`cost_slack`, `n_scenarios`, `weight_vector`) based on what the Pareto front reveals in each iteration — the WHILE loop becomes a self-adjusting search, not a fixed sweep.
+- **Exception-driven fallback:** `EXCEPTION WHEN InfeasibleSolution THEN CALL relaxed_solver(...)` — if one solver reports infeasible, the orchestrator automatically retries with loosened constraints or a different algorithm.
+
+The result is an orchestration layer that is not only tighter than MPI but qualitatively different: it combines deterministic solver execution with probabilistic LLM reasoning in a single coherent specification. The LLM participates in *deciding* which solver, which parameters, which model — not just in formatting the output. This is what makes SPL a natural operating language for complex strategy optimization, where no single solver or fixed parameter set covers all cases.
+
+**Why this matters for SPL:**
+
+Single-objective OR asks *"what is optimal?"* — one right answer, ASSERT checks it. Strategy optimization asks *"what is the best tradeoff?"* — a family of right answers (the Pareto front), and the LLM's NL→decomposition role expands to two tasks: (1) extract *multiple* competing objectives and their relative priorities from stakeholder language; (2) interpret the Pareto front in business terms so a human can choose the operating point. The ASSERT predicate shifts from `status == "Optimal"` (single winner) to Pareto non-dominance: *"is the chosen solution on the frontier, or does a strictly better alternative exist?"*
+
+**Four branches of strategy optimization** covered below: multi-objective evolutionary search (finding the Pareto front), stochastic programming (decisions under uncertainty), game theory (competing rational agents), and black-box Bayesian search (when the objective has no closed-form formula).
 
 #### Multi-objective optimization (Pareto front)
 
@@ -92,7 +174,7 @@ The foundational paper's verifier ladder (R1 SymPy → R2 SageMath → R3 Lean) 
 
 | ID | Solver | Problem class | Planned recipe | ASSERT predicate | Real-world domains | References |
 |:---:|---|---|:---:|---|---|---|
-| S021 | **Pyomo** + PySP | Two-stage stochastic LP/ILP — *decide now → observe scenario → recourse* | r107 | `status == "optimal"` per scenario tree | Inventory under demand uncertainty, staffing under absenteeism, energy dispatch under weather | [pyomo.org](http://www.pyomo.org/) · [GitHub](https://github.com/Pyomo/pyomo) · [docs](https://pyomo.readthedocs.io/) |
+| S021 | **Pyomo** + PySP | Two-stage stochastic LP/ILP — *decide now → observe scenario → recourse* | r107 | `status == "optimal"` per scenario tree | Inventory under demand uncertainty, staffing under absenteeism, energy dispatch under weather | [pyomo.org](http://www.pyomo.org/) · [GitHub](https://github.com/Pyomo/pyomo) · [docs](https://pyomo.readthedocs.io/) · [PySP docs](https://pyomo.readthedocs.io/en/stable/library_reference/pysp.html) · [mpi-sppy](https://github.com/Pyomo/mpi-sppy) (modern successor to PySP) |
 | S022 | **python-mip** | MILP with scenario-based robust constraints | r108 | `model.status == OptimizationStatus.OPTIMAL` | Supply chain resilience, project scheduling with risk budgets | [python-mip.com](https://www.python-mip.com/) · [GitHub](https://github.com/coin-or/python-mip) |
 
 #### Game theory / competitive strategy
@@ -128,6 +210,110 @@ Reading recipes 75–94 in order, the verification structure gets progressively 
 | **C7** | **Kernel-checked proof + faithfulness gap** | Solver proves formalized statement; LLM separately certifies faithfulness | Lean 4 (r76) — formal verification has a boundary; SPL surfaces it |
 
 **Design principle:** Class 1 covers most "does this satisfy hard constraints" OR problems at minimal cost. Classes 4–5 are required for data-governance and finance audiences. Class 7 is for policy-compliance claims.
+
+### 3.5 Terminology glossary (OR and strategy)
+
+*Placeholder — expand as new terms appear across recipes and experiments.*
+
+#### SPL language terms
+
+| Term | Full form / meaning | Links |
+|---|---|---|
+| **SPL** | Symbolic Prompt Language — declarative language for composing deterministic solver calls and probabilistic LLM calls in a single workflow; DODA: Design Once, Deploy Anywhere | [PyPI](https://pypi.org/project/spl-llm/) · [arXiv](https://arxiv.org/abs/2607.07727) · [GitHub](https://github.com/digital-duck/SPL.py) |
+| **DODA** | Design Once, Deploy Anywhere — the SPL principle that a `.spl` specification never changes across runtimes, adapters, or deployment environments; all physical decisions resolved at execution time | [arXiv](https://arxiv.org/abs/2607.07727) |
+| **CALL / CALL PARALLEL** | SPL workflow composition primitives — `CALL` invokes a sub-workflow sequentially; `CALL PARALLEL` dispatches multiple branches concurrently via `asyncio.gather` or Momagrid nodes | [arXiv](https://arxiv.org/abs/2607.07727) |
+| **ASSERT** | SPL verification gate — checks solver output against a predicate; raises `AssertionFailed` if the solution does not meet the correctness criterion | [arXiv](https://arxiv.org/abs/2607.07727) |
+| **EVALUATE** | SPL semantic branching — conditions evaluated by the LLM judge, not string equality; enables rule-driven routing between solvers, models, or strategies | [arXiv](https://arxiv.org/abs/2607.07727) |
+| **Momagrid** | SPL's distributed inference grid — workers receive tasks via REST hub; `CALL PARALLEL` branches route to different nodes transparently | — |
+
+#### Operations Research (OR) terms
+
+| Term | Full form / meaning | Links |
+|---|---|---|
+| **LP** | Linear Programming — optimize a linear objective subject to linear constraints; variables are continuous | [wiki](https://en.wikipedia.org/wiki/Linear_programming) · [PuLP docs](https://coin-or.github.io/pulp/) |
+| **ILP / MIP** | Integer Linear Programming / Mixed-Integer Programming — some or all variables must be integers; much harder than LP | [wiki](https://en.wikipedia.org/wiki/Integer_programming) |
+| **CP** | Constraint Programming — declarative feasibility search over discrete domains; no objective required | [wiki](https://en.wikipedia.org/wiki/Constraint_programming) · [OR-Tools CP-SAT](https://developers.google.com/optimization/cp) |
+| **OEE** | Overall Equipment Effectiveness — manufacturing KPI: OEE = Availability × Performance × Quality; 100% = perfect production | [wiki](https://en.wikipedia.org/wiki/Overall_equipment_effectiveness) |
+| **Cycle time** | Time to complete one unit of work (one product, one transaction); lower is faster throughput | [wiki](https://en.wikipedia.org/wiki/Cycle_time) |
+| **Throughput** | Number of units completed per unit time; inversely related to cycle time | [wiki](https://en.wikipedia.org/wiki/Throughput) |
+| **Makespan** | Total time to complete all jobs in a schedule; the objective minimized in job-shop problems | [wiki](https://en.wikipedia.org/wiki/Makespan) |
+| **Fill rate** | Fraction of customer orders fulfilled from stock without backorder; supply chain service metric | [wiki](https://en.wikipedia.org/wiki/Fill_rate) |
+| **Lead time** | Time from order placement to delivery; key supply chain speed metric | [wiki](https://en.wikipedia.org/wiki/Lead_time) |
+| **Inventory turns** | Annual sales ÷ average inventory value; high = lean, low = excess stock | [wiki](https://en.wikipedia.org/wiki/Inventory_turnover) |
+| **Feasible / Infeasible** | A solution is feasible if it satisfies all constraints; infeasible means no such solution exists | [wiki](https://en.wikipedia.org/wiki/Feasible_region) |
+| **Utopia point** | The theoretical best value for each objective if optimized independently; forms the upper bound of the Pareto front | [wiki](https://en.wikipedia.org/wiki/Multi-objective_optimization) |
+| **Hypervolume indicator** | Scalar measure of Pareto front quality: volume of objective space dominated by the front; higher = better | [wiki](https://en.wikipedia.org/wiki/Hypervolume_indicator) |
+
+#### Strategy optimization terms
+
+| Term | Full form / meaning | Links |
+|---|---|---|
+| **Pareto front** | Set of non-dominated solutions in a multi-objective problem — improving one objective requires worsening another | [wiki](https://en.wikipedia.org/wiki/Pareto_front) |
+| **Dominated solution** | A solution worse than another on at least one objective and no better on any; can be discarded | [wiki](https://en.wikipedia.org/wiki/Pareto_front) |
+| **Scalarization** | Reducing multi-objective to single-objective via weighted sum or ε-constraint; traces the Pareto front by sweeping weights | [wiki](https://en.wikipedia.org/wiki/Multi-objective_optimization#Scalarizing) |
+| **NSGA-II** | Non-dominated Sorting Genetic Algorithm II — sorts population by Pareto rank then crowding distance to maintain diversity; most widely used multi-objective evolutionary algorithm (Deb et al., 2002) | [paper](https://ieeexplore.ieee.org/document/996017) · [pymoo](https://pymoo.org/algorithms/moo/nsga2.html) |
+| **MOEA/D** | Multi-Objective Evolutionary Algorithm based on Decomposition — decomposes the Pareto problem into scalar subproblems using weight vectors; each solved cooperatively with neighbors; often faster than NSGA-II on high-dimensional fronts | [paper](https://ieeexplore.ieee.org/document/4358754) · [pymoo](https://pymoo.org/algorithms/moo/moead.html) |
+| **Carbon footprint** | Total greenhouse gas emissions (CO₂ equivalent) generated by an activity, product, or supply chain | [wiki](https://en.wikipedia.org/wiki/Carbon_footprint) |
+| **ESG** | Environmental, Social, Governance — three dimensions of non-financial corporate performance used by investors | [wiki](https://en.wikipedia.org/wiki/Environmental,_social,_and_corporate_governance) |
+| **Alpha** | Finance: excess return above a benchmark (e.g. market index); portfolio managers aim to generate positive alpha | [wiki](https://en.wikipedia.org/wiki/Alpha_(finance)) |
+| **Liquidity** | Ease of converting an asset to cash without moving its price; a portfolio constraint, not just a return metric | [wiki](https://en.wikipedia.org/wiki/Market_liquidity) |
+| **Portfolio volatility** | Standard deviation of portfolio returns; the "risk" axis in mean-variance (Markowitz) finance optimization | [wiki](https://en.wikipedia.org/wiki/Volatility_(finance)) |
+| **Two-stage stochastic LP** | Optimize a first-stage decision before uncertainty resolves; then take recourse actions after observing each scenario | [wiki](https://en.wikipedia.org/wiki/Stochastic_programming) |
+| **PySP** | Pyomo Stochastic Programming — Pyomo extension for two-stage and multi-stage stochastic programs; models scenario trees declaratively; superseded by mpi-sppy for parallel/large-scale use | [docs](https://pyomo.readthedocs.io/en/stable/library_reference/pysp.html) · [mpi-sppy](https://github.com/Pyomo/mpi-sppy) |
+| **MPI** | Message Passing Interface — standard for distributed-memory parallel computing; processes communicate by explicitly passing messages rather than sharing memory | [spec](https://www.mpi-forum.org/) · [wiki](https://en.wikipedia.org/wiki/Message_Passing_Interface) |
+| **mpi-sppy** | MPI-based Stochastic Programming in Python — modern successor to PySP; distributes scenario solving across cores/nodes via MPI | [GitHub](https://github.com/Pyomo/mpi-sppy) |
+| **Robust constraint** | A constraint that must hold under all scenarios in an uncertainty set, not just in expectation | [wiki](https://en.wikipedia.org/wiki/Robust_optimization) |
+
+### 3.6 Open questions and future directions
+
+*Research threads worth exploring as the solver ecosystem expands.*
+
+| # | Question | Why it matters |
+|:---:|---|---|
+| Q1 | **Principal objective detection** — can an LLM reliably identify which dimension (cost, time, risk, quality) the stakeholder will not compromise, from NL alone? | Determines the anchor axis for the entire Pareto search; wrong identification leads to irrelevant tradeoff curves |
+| Q2 | **Pareto ASSERT** — how should the ASSERT predicate be defined for multi-objective problems? Pareto non-dominance, hypervolume threshold, or distance from utopia point? | Extends the SPL verifier ladder to strategy optimization; no canonical answer yet |
+| Q3 | **3D Pareto surface visualization** — which interactive format (parallel coordinates, scatter matrix, radar chart) is most effective for human decision-making? | Visualization is the final step of the LLM's interpretation role; choosing the wrong format hides the tradeoff |
+| Q4 | **Adaptive solver routing** — can `EVALUATE` reliably select the right solver (PuLP vs OR-Tools vs cvxpy vs pymoo) from a problem description, without human intervention? | Would make SPL self-configuring for OR problems; requires a benchmark of routing accuracy |
+| Q5 | **Multi-model ensemble for objectives** — assign a specialized LLM to each objective dimension (e.g. finance model for cost/risk, ops model for time/quality); compose results via CALL PARALLEL | Tests whether model specialization improves decomposition quality vs a single general model |
+| Q6 | **Stochastic + multi-objective combined** — how to find the Pareto front when objectives are themselves uncertain (e.g. cost and service level both depend on demand scenarios)? | Realistic supply-chain strategy; requires stochastic multi-objective solvers (e.g. pymoo + PySP integration) |
+| Q7 | **Game-theoretic strategy** — can SPL model Nash equilibrium finding when multiple rational agents (competitors, suppliers) optimize their own objectives? | Pricing strategy, auction design, negotiation — high business value, few accessible open-source tools |
+| Q8 | **Scale ceiling** — how large a scenario tree (S021/mpi-sppy) or how many Pareto front evaluations (S019/pymoo) can SPL orchestrate on Momagrid before latency dominates? | Sets the practical envelope for distributed strategy optimization on SPL infrastructure |
+| Q9 | **Stakeholder preference learning** — can the LLM refine its estimate of which Pareto point the stakeholder prefers through an interactive Q&A loop (WHILE)? | Turns the static Pareto front into a conversational decision-support tool |
+| Q10 | **Multi-objective benchmark suite** — analogous to the r78 ablation (§4), define a standard set of strategy problems with known Pareto fronts to measure LLM decomposition quality across models | Without a benchmark, solver=ON vs solver=OFF comparisons are anecdotal; needed for a follow-on TMLR paper |
+
+### 3.7 Why SPL matters
+
+Single-objective OR solvers (§3.1) are mature and well-understood — the open question is not *whether* LP or ILP can be solved, but *how* to connect real-world problems, expressed in natural language by non-technical stakeholders, to the right solver with the right formulation. That translation layer is exactly what LLMs provide, and exactly what SPL orchestrates.
+
+**The 2×2 insight:**
+
+|  | Deterministic | Probabilistic |
+|---|---|---|
+| **Design time** | Workflow structure, solver choice, ASSERT predicate | LLM selects problem decomposition, routes to solver |
+| **Run time** | Solver executes, returns certified answer | LLM interprets result, proposes next perturbation |
+
+SPL is the only language that inhabits all four quadrants in a single specification. A conventional workflow tool handles only the deterministic cells; a pure LLM handles only the probabilistic cells. SPL closes the 2×2 matrix.
+
+**Why this matters beyond OR:**
+
+- **Verifiability:** the ASSERT gate provides a mathematical correctness guarantee that pure LLM outputs cannot — critical for finance, compliance, and engineering decisions.
+- **Composability:** complex strategy workflows (two-phase Pareto sweep, adaptive solver routing, scenario-tree stochastic search) are expressed by composing primitives that already exist in the language — no new framework needed.
+- **Portability (DODA):** the same `.spl` file runs on a laptop (ollama), a cloud API (openrouter), or a distributed grid (Momagrid) — the specification never changes, only the deployment target.
+- **Tighter orchestration than MPI:** SPL does not merely pass data between fixed processes — it *reasons* about which solver, which model, and which parameters to use next, dynamically, based on intermediate results and stakeholder-defined rules.
+- **The NL→solver bridge:** the irreplaceable LLM contribution is not computation — it is translating ambiguous stakeholder language into a precise, solver-ready problem formulation. H2 ablation results (§4) confirm that sonnet-4-6 performs this translation reliably at N=5, 10, 20 even when it cannot solve the LP itself.
+
+**SPL Benefits**
+
+| Benefit | What it means in practice |
+|---|---|
+| **Accessibility** | Makes OR accessible to practitioners who cannot write PuLP code; makes strategy optimization accessible to practitioners who cannot write pymoo code |
+| **Verifiability** | ASSERT gate delivers a mathematical correctness guarantee that pure LLM outputs cannot — one `.spl` file away for finance, compliance, and engineering decisions |
+| **Composability** | Complex workflows (Pareto sweep, adaptive solver routing, stochastic search) assembled from primitives already in the language — no new framework needed |
+| **Portability (DODA)** | The same `.spl` file runs on a laptop (ollama), cloud API (openrouter), or distributed grid (Momagrid) — specification never changes, only the deployment target |
+| **Intelligent orchestration** | SPL reasons about which solver, model, and parameters to use next — dynamically, based on intermediate results and rules — not just shuttling data between fixed processes |
+| **Reproducibility** | Every run is fully specified by the `.spl` file, adapter, and model flags — no hidden state, no notebook side-effects; re-running the same file on the same input always produces a verifiable, comparable result |
+| **Scalability** | Auto-sweep across solvers, LLMs, and parameters is built into the execution model — r77 and r78 demonstrate systematic multi-model × multi-size × solver-ON/OFF sweeps with no change to the `.spl` specification; `CALL PARALLEL` and Momagrid extend this to distributed scale |
+| **NL→solver Interface** | LLM translates ambiguous stakeholder language into a precise, solver-ready formulation; H2 results confirm sonnet-4-6 does this reliably at N=5, 10, 20 even when it cannot solve the LP itself |
 
 ---
 
