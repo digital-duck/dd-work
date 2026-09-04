@@ -10,7 +10,7 @@
 
 The diagram below (contributed by GPT-4o) shows how the six-stage NL→solver pipeline is structured. The LLM acts as translator; the solver is the source of truth.
 
-![Solver Advisor Architecture](review-feedback/Solver-Advisor-arch-by-ChatGPT.png)
+![Solver Advisor Architecture](Solver-Advisor-arch-by-ChatGPT.png)
 
 *Figure (illustrative, not the authoritative design): GPT-4o's six-stage sketch of an NL→solver pipeline. Useful as a mental map; not rigorous. Key gaps: the 0.72 confidence threshold is arbitrary; the clarify loop and gap-detection path are missing; Stage 3 (LLM formulation) is the highest-risk step (§4.15) but is presented as routine; the final "Certificate" label conflates C1 solver status with C7 kernel-verified proof (§10); C0 model validation and network flow are absent from the solver palette.*
 
