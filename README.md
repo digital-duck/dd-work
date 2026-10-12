@@ -7,8 +7,7 @@
 
 | # | arXiv ID | Category | Title | Comment | Repo |
 |---|----------|----------|-------|-------|-------|
-| 11 | submit/8214143 | cs.CL | [Data-Driven Typesetting of Chinese Character
-Decompositions with zitex](./docs/zitex-arxiv.pdf) |  | https://github.com/digital-duck/zinets-zitex |
+| 11 | submit/8214143 | cs.CL | [Data-Driven Typesetting of Chinese Character Decompositions with zitex](./docs/zitex-arxiv.pdf) | | https://github.com/digital-duck/zinets-zitex |
 | 10 | [2607.07727](https://arxiv.org/abs/2607.07727) | cs.CL, cs.PL | [SPL: Orchestrating Workflows with Declarative Deterministic–Probabilistic Composition](./docs/spl-dual-mode.pdf) |  | https://github.com/digital-duck/SPL.py |
 | 9 | submit/7556205 | cs.CL | [Beyond Vibe Coding: Intent Invariance and Structured Prompt Language](./docs/beyond-vibe-coding-arxiv-submitted.pdf) |  | https://github.com/digital-duck/SPL.py |
 | 8 | submit/7420152 | cs.CL, cs.PL | [SPL 2.0: A Declarative Language for Agentic Workflow Orchestration](./docs/SPL20-arxiv.pdf) |   | https://github.com/digital-duck/SPL20 |
