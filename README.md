@@ -6,7 +6,7 @@
 
 | # | arXiv ID | Category | Title | Comment | Repo |
 |---|----------|----------|-------|-------|-------|
-| 12 | submit/8350460 | cs.CL | [ConceptBook: A Graph-First Framework for AI-Generated Curricula](./docs/spl4ed-paper-arxiv.pdf) | under [TMLR](./docs/spl4ed-tmlr-v2.0.pdf) review  | https://github.com/digital-duck/concept-book |
+| 12 | submit/8350460 | cs.CL | [ConceptBook: A Graph-First Framework for AI-Generated Curricula](./docs/spl4ed-paper-arxiv.pdf) | under [TMLR](./docs/spl4ed-tmlr-v2.1.pdf) review  | https://github.com/digital-duck/concept-book |
 | 11 | submit/8214143 | cs.CL | [Data-Driven Typesetting of Chinese Character Decompositions with zitex](./docs/zitex-arxiv.pdf) | | https://github.com/digital-duck/zinets-latex |
 | 10 | [2607.07727](https://arxiv.org/abs/2607.07727) | cs.CL, cs.PL | [SPL: Orchestrating Workflows with Declarative Deterministic–Probabilistic Composition](./docs/spl-dual-mode.pdf) |  | https://github.com/digital-duck/SPL.py |
 | 9 | submit/7556205 | cs.CL | [Beyond Vibe Coding: Intent Invariance and Structured Prompt Language](./docs/beyond-vibe-coding-arxiv-submitted.pdf) |  | https://github.com/digital-duck/SPL.py |
