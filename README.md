@@ -1,8 +1,18 @@
-# Research Work by Wen G. Gong
+# Wen Gong's Work
 
 [Google Scholar](https://scholar.google.com/citations?view_op=list_works&hl=en&user=P-E_YsMAAAAJ)
 
-## Research papers 
+## Tools
+
+| Name|  Source | CLI | PyPI-pkg | Notes |
+|---|---|---|---|---|
+| ZiNet |  [zinet](https://github.com/digital-duck/zinet) | `zinet` | zinet | The shared graph core: the `graph.yaml` format with its schema, validator and transforms, the graph algorithms (build order, cycles, reducibility, learning paths) and the drawing engines (cytoscape, graphviz, mermaid, ascii). GraphLang, Work-Graph and App-Graph all build on it. |
+| Graph-Lang | [graflang](https://github.com/digital-duck/graflang) | `graf` | graflang | Evolved from [SPL.py](https://github.com/digital-duck/SPL.py): a language for LLM workflows written as graphs ("recipes") rather than SPL scripts. Model calls, programs, loops, Cedar-guarded risky steps and reusable parts are nodes. A recipe can be validated, drawn, capped, checkpointed and replayed. Also has a visual editor (`graf vis --edit`) and a Python API (`graphlang.recipes`). |
+| App-Graph | [app-graph](https://github.com/digital-duck/app-graph) | `appgraph` | app-graph | An app builder: describe an app as a blueprint graph and it generates tested code with an LLM. It runs on GraphLang recipes, with the tests in Docker. It also works in reverse (`appgraph extract`, an existing repo to a blueprint) and measures drift between two blueprints. Successor to graph-code. |
+| Work-Graph|  [work-graph](https://github.com/digital-duck/work-graph) | `workgraph` | workgraph | A knowledge layer beside Claude Code: one searchable graph of your projects, their lifecycle (requirements → design → tests), products, teams and processes. Includes gap reports, `workgraph ask` with checked citations, a Streamlit UI and private git sync. |
+|Concept-Book|[concept-book](https://github.com/digital-duck/concept-book)||-| Generates a concept-book from a concept graph: an LLM writes, and a verifier checks, an explanation for each concept along its learning path. Path A goes from an authored graph to a book; Path B ingests an existing textbook into a graph and generates a companion book. Comes with a web portal (Vite frontend, FastAPI backend) and a series of `cb-*` books (OpenStax and others). It still runs on SPL.py `.spl` workflows (`build_concept_book`, `answer_on_demand`, `compare_concepts`), so a GraphLang refactor is planned. |
+
+## Papers 
 
 | # | arXiv ID | Category | Title | Comment | Repo |
 |---|----------|----------|-------|-------|-------|
