@@ -48,6 +48,10 @@
 - [A Cookbook of SPL Recipes](docs/SPL-Cookbook-DRAFT-v0.5.pdf)
 
 
+## Tech-Stack
+
+[Architecture](./docs/arch/dd-techstack.pdf)
+
 ## Work in progress
 
 
