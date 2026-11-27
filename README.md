@@ -51,7 +51,8 @@
 
 ## Tech-Stack
 
-[Architecture](./docs/arch/dd-techstack.pdf)
+- [Architecture](./docs/arch/dd-techstack.pdf)
+- [Readme](./docs/arch/readme-techstack.pdf)
 
 ## Work in progress
 
